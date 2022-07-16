@@ -1,18 +1,22 @@
 const ccxt = require("ccxt");
 const moment = require("moment");
+const delay = require("delay");
 
 const binance = new ccxt.binance({
-    apiKey: 'WkKTN6g7NmDOHXAlt61tGkylBdHBraJHq12FcWY7tA4cRe76s2e3sM20qWxV7Akf',
-    secret: 'ylJ91Fs3CwhJ4fzn1e0SeSUk1q5UPA7BtpUWzXBSy1Ht9gPr9RXDCYMs3681fW8O'
+    apiKey: 'SqX6iUmVrxB8ODD1h5saqyP1OaVozqHWCz9x3rqub7YeWGSOPWWIH8PMG2d4l1PG',
+    secret: '7zTwwFEaQ9tQPWzQgDKrH9DlekNSfIF3bTIP3hlIT1xtYgqfnAdh861ngVXZIuA8'
 });
-binance.setSandboxMode (true);
+ binance.setSandboxMode (true);
 
 
-async function printBinance(){
+async function printBalance(btcPrice){
     const balance = await binance.fetchBalance();
-    console.log(balance);
+    const total = balance.total
+    console.log(`Balance: BTC ${total.BTC}, USDT ${total.USDT}`);
+    console.log(`Total USD: ${(total.BTC-1)*btcPrice +total.USDT}. \n`);
 }
-async function main(){
+
+async function tick() {
 
     const price = await binance.fetchOHLCV('BTC/USDT','1m',undefined,5);
     //console.log(price);
@@ -26,7 +30,39 @@ async function main(){
             volume: price[5]
         }
     })
-    console.log(bPrice);
+    const avaragePrice = bPrice.reduce((acc,price)=>acc+price.close,0)/5;
+    const lastPrice = bPrice[bPrice.length-1].close;
 
+    console.log("--Thong tin gia--")
+    console.log(bPrice.map(p=>p.close),avaragePrice,lastPrice);
+    console.log("--ket thuc Thong tin gia--")
+
+    // Tinh toan trade
+    // if(lastPrice>avaragePrice){
+    //     let direction = 'sell'
+    // }else {
+    //     let direction ='buy'
+    // }
+    // Dung Ternary cho chuyen nghiep
+    const direction = lastPrice>avaragePrice ? 'sell': 'buy';
+    const TRADE_SIZE = 100;
+    const quantity = 100/lastPrice;
+
+    // tao giao dich
+    console.log("--Thong tin gia--")
+    console.log('avarage price:'+ avaragePrice+ '------last price: '+ lastPrice); // in thong tin price
+    const order = await binance.createMarketOrder('BTC/USDT',direction,quantity);
+    console.log(`${moment().format()}:${direction}${quantity} BTC at ${lastPrice}`);
+    printBalance(lastPrice);
+    // console.log(order);
 }
-printBinance()
+
+async function main(){
+    while (true){
+        await tick();
+        await delay(60*1000)
+    }
+}
+
+main();
+// printbalance()

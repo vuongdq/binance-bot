@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "ccxt": "^1.90.86",
+    "delay": "^5.0.0",
     "moment": "^2.29.4",
     "nodejs": "^0.0.0"
   }
